@@ -1,0 +1,47 @@
+@font-face {
+	font-family: 'Radiance';
+	src: url('fonts/radiance-regular.otf') format("opentype");
+	font-weight: 400;
+}
+
+@font-face {
+	font-family: 'Radiance';
+	src: url('fonts/radiance-semibold.otf') format("opentype");
+	font-weight: 500;
+}
+
+@font-face {
+	font-family: 'Radiance';
+	src: url('fonts/radiance-bold.otf') format("opentype");
+	font-weight: 600;
+}
+
+@font-face {
+	font-family: 'Radiance';
+	src: url('fonts/radiance-black.otf') format("opentype");
+	font-weight: 700;
+}
+
+@font-face {
+	font-family: 'Reaver';
+	src: url('fonts/reaver-regular.otf') format("opentype");
+	font-weight: 400;
+}
+
+@font-face {
+	font-family: 'Reaver';
+	src: url('fonts/reaver-semibold.otf') format("opentype");
+	font-weight: 500;
+}
+
+@font-face {
+	font-family: 'Reaver';
+	src: url('fonts/reaver-bold.otf') format("opentype");
+	font-weight: 600;
+}
+
+@font-face {
+	font-family: 'Reaver';
+	src: url('fonts/reaver-black.otf') format("opentype");
+	font-weight: 700;
+}

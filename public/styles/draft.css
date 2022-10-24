@@ -1,0 +1,202 @@
+@import "fonts.css";
+
+:root {
+    --bg_main: rgb(23, 29, 29);
+    --bg_main_peak: rgb(36, 51, 51);
+    --current-selection: rgb(33, 51, 51);
+    --current-selection-peak: rgb(42, 65, 65);
+    --blk-shadow: rgba(0, 0, 0, .75);
+    --white-text: rgb(255, 255, 255);
+}
+
+@property --info-left {
+    syntax: '<color>';
+    initial-value: rgb(23, 29, 29);
+    inherits: false;
+}
+
+@property --info-right {
+    syntax: '<color>';
+    initial-value: rgb(23, 29, 29);
+    inherits: false;
+}
+
+@keyframes active_selection {
+    from { background-color: var(--current-selection); }
+    to { background-color: var(--current-selection-peak); }
+}
+
+body {
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    overflow: hidden;
+    font-family: Reaver;
+    background-color: transparent;
+    user-select: none;
+}
+
+#draft {
+    position: absolute;
+    display: flex;
+    height: 24%;
+    width: 100%;
+    bottom: 0;
+    color: var(--white-text);
+}
+
+.side_container {
+    width: 100%;
+}
+
+.pick_group {
+    display: flex;
+    height: 80%;
+}
+
+.ban_group {
+    display: flex;
+    height: 20%;
+}
+
+.info {
+    display: flex;
+    flex-direction: column;
+    width: 45%;
+    box-shadow: inset 0 0 .375em 0 var(--blk-shadow);
+    background: linear-gradient(90deg, var(--info-left) 0%, var(--info-right) 100%);
+    transition: --info-left .5s, --info-right .5s;
+    justify-content: center;
+    align-items: center;
+}
+
+.info.radiant {
+    --info-left: var(--current-selection-peak);
+    --info-right: var(--bg_main);
+}
+
+.info.dire {
+    --info-left: var(--bg_main);
+    --info-right: var(--current-selection-peak);
+}
+
+#scorebar_spacer {
+    width: 100%;
+    height: 10%;
+}
+
+.current_selection {
+    width: 100%;
+    height: 70%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+#current_team {
+    font-size: 6em;
+}
+
+#current_time {
+    font-size: 2em;
+    margin-top: -1em;
+    font-weight: 600;   
+}
+
+.reserve {
+    width: 100%;
+    height: 20%;
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    align-self: flex-end;
+    font-weight: 500;
+}
+
+.timer {
+    transition: opacity .3s, font-size .3s;
+    opacity: 0;
+}
+
+.reserve .timer {
+    font-size: 1.375em;
+    margin-bottom: .375em;
+    width: 50%;
+    text-align: center;
+    opacity: .25;
+}
+
+.reserve .timer.active {
+    font-size: 1.625em;
+}
+
+.timer.active {
+    opacity: 1;
+}
+
+.pick {
+    position: relative;
+    background: var(--bg_main) url("../assets/dota2_logo.png") center center/auto no-repeat;
+    background-size: 50%;
+    background-blend-mode: overlay;
+    width: 20%;
+    height: 100%;
+}
+
+.pick.active {
+    animation: active_selection 1s ease-in-out infinite alternate;
+}
+
+.player_name {
+    display: none;
+    width: 100%;
+    position: absolute;
+    bottom: 0;
+    padding: .375em 0 .375em 0;
+    background-color: var(--blk-shadow);
+    font-family: Radiance;
+    font-weight: 400;
+    font-size: 1em;
+    text-align: center;
+    transition: opacity .5s;
+    opacity: 0;
+}
+
+.pick_video {
+    width: 100%;
+    height: 100%;
+    object-fit: fill;
+    z-index: 0;
+    opacity: 0;
+    transition: opacity 1s;
+}
+
+.ban {
+    position: relative;
+    background-color: var(--bg_main);
+    width: 15%;
+    height: 100%;
+}
+
+.ban.active {
+    animation: active_selection 1.5s ease-in-out infinite alternate;
+}
+
+.ban_img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: saturate(.2) brightness(.8) contrast(1.05);
+    opacity: 0;
+    transition: opacity 1s;
+}
+
+.shadow {
+    position: absolute;
+    top: 0;
+    z-index: 1;
+    height: 100%;
+    width: 100%;
+    box-shadow: inset 0 0 1.5625em 0 var(--blk-shadow);
+}
