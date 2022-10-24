@@ -1,3 +1,5 @@
+![draft](https://user-images.githubusercontent.com/13590967/197571003-cd1672a3-1f6d-401b-bc52-f3414e333c4b.png)
+
 ## Dependencies
 `node.js` and following packages `dota2-gsi`, `express` and `socket.io`
 
