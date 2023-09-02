@@ -7,6 +7,8 @@
     --current-selection-peak: rgb(42, 65, 65);
     --blk-shadow: rgba(0, 0, 0, .75);
     --white-text: rgb(255, 255, 255);
+    --screen-width: 1920px;
+    --screen-height: 1080px;
 }
 
 @property --info-left {
@@ -27,8 +29,8 @@
 }
 
 body {
-    width: 100vw;
-    height: 100vh;
+    width: var(--screen-width);
+    height: var(--screen_height);
     margin: 0;
     overflow: hidden;
     font-family: Reaver;

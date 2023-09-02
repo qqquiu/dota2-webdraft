@@ -48,11 +48,6 @@ http_server.listen(8080, () =>
 });
 
 dota_server.events.on('newclient', function(client) {
-
-    client.on('newdata', data => {
-        console.log(data);
-    });
-    /*
     client.on('newdata', data => {
         try
         {
@@ -76,12 +71,10 @@ dota_server.events.on('newclient', function(client) {
             return;
         }
     });
-    */
 });
 
 async function UpdateDraft(draft, delta)
 {
-    console.log("Draft atualizado");
     UpdateActiveTeam(draft.activeteam);
     UpdateDraftTime(draft.activeteam_time_remaining, draft.radiant_bonus_time, draft.dire_bonus_time);
     if (delta) UpdateDraftPicks(draft.team2, draft.team3, delta);
