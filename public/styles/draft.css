@@ -137,7 +137,7 @@ body {
 
 .pick {
     position: relative;
-    background: var(--bg_main) url("../assets/dota2_logo.png") center center/auto no-repeat;
+    background: var(--bg_main) url("../assets/pick_logo.png") center center/auto no-repeat;
     background-size: 50%;
     background-blend-mode: overlay;
     width: 20%;

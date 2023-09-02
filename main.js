@@ -37,18 +37,22 @@ radiant_picks = new Array(5).fill(unselected);
 dire_picks    = new Array(5).fill(unselected);
 draftStarted  = false;
 
-express_app.get('', (req, res) =>
+express_app.get('/draft', (req, res) =>
 {
     res.sendFile(path.join(__dirname + '/draft.html'));
 });
 
 http_server.listen(8080, () => 
 {
-        console.log('http://localhost:8080/draft.html');
+    console.log('http://localhost:8080/draft');
 });
 
 dota_server.events.on('newclient', function(client) {
 
+    client.on('newdata', data => {
+        console.log(data);
+    });
+    /*
     client.on('newdata', data => {
         try
         {
@@ -72,21 +76,23 @@ dota_server.events.on('newclient', function(client) {
             return;
         }
     });
+    */
 });
 
-function UpdateDraft(draft, delta)
+async function UpdateDraft(draft, delta)
 {
+    console.log("Draft atualizado");
     UpdateActiveTeam(draft.activeteam);
     UpdateDraftTime(draft.activeteam_time_remaining, draft.radiant_bonus_time, draft.dire_bonus_time);
     if (delta) UpdateDraftPicks(draft.team2, draft.team3, delta);
 }
 
-function UpdateActiveTeam(team, ispick)
+async function UpdateActiveTeam(team, ispick)
 {
     io.emit("ActiveTeam", team);
 }
 
-function UpdateDraftTime(time, radiant, dire)
+async function UpdateDraftTime(time, radiant, dire)
 {
     radiant_min = ~~(radiant / 60);
     radiant_sec = radiant % 60;
@@ -95,7 +101,7 @@ function UpdateDraftTime(time, radiant, dire)
     io.emit("UpdateTimer", time, radiant_min, radiant_sec, dire_min, dire_sec);
 }
 
-function UpdateDraftPicks(radiant, dire, delta)
+async function UpdateDraftPicks(radiant, dire, delta)
 {
     if (delta.team2)
     {

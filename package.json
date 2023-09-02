@@ -1,0 +1,34 @@
+{
+  "name": "dota2-webdraft",
+  "version": "0.0.1",
+  "description": "Dota 2 web-rendered draft screen using dota2-gsi",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/qqquiu/dota2-webdraft.git"
+  },
+  "keywords": [
+    "dota",
+    "2",
+    "draft",
+    "gsi",
+    "web",
+    "picks",
+    "bans"
+  ],
+  "author": "quiu",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/qqquiu/dota2-webdraft/issues"
+  },
+  "homepage": "https://github.com/qqquiu/dota2-webdraft#readme",
+  "dependencies": {
+    "dota2-gsi": "^1.0.2",
+    "dotagsi": "^1.3.6",
+    "express": "^4.18.2",
+    "socket.io": "^4.7.2"
+  }
+}
