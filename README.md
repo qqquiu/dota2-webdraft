@@ -5,6 +5,7 @@
 - `git clone https://github.com/qqquiu/dota2-webdraft`
 - `cd dota2-webdraft`
 - `npm install`
-- Make sure to [configure the Dota 2 client to work with dota2-gsi](https://github.com/xzion/dota2-gsi#configuring-the-dota-2-client)
-- Add `-gamestateintegration` to your Dota 2 launch parameters for better performance
-- Run `main.js` using node and the draft webpage will be available at `http://localhost:8080/draft.html`
+- Copy the `gamestate_integration_dota2-gsi` file to `<dota 2 install folder>\game\dota\cfg\gamestate_integration`
+- Add `-gamestateintegration` to your Dota 2 launch parameters
+- Run `main.js` using node and the contron panel webpage will be available at `http://localhost:8080/panel.html`
+- From the control panel, you can copy links to different pages such as draft, ingame, and whatever else may exist.

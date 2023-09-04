@@ -1,0 +1,12 @@
+@import 'fonts.css';
+
+body {
+    overflow: hidden;
+    user-select: none;
+    background-color: green;
+    font-family: Reaver;
+    color: white;
+    font-size: 128px;
+    font-smooth: never;
+    text-shadow: 0px 0px 2px white;
+}

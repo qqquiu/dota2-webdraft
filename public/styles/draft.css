@@ -1,12 +1,16 @@
 @import "fonts.css";
 
 :root {
-    --bg_main: rgb(23, 29, 29);
-    --bg_main_peak: rgb(36, 51, 51);
-    --current-selection: rgb(33, 51, 51);
-    --current-selection-peak: rgb(42, 65, 65);
+    --bg_main: rgb(26, 29, 29);
+    --bg_main_peak: rgb(45, 51, 51);
+    --current-selection: rgb(45, 51, 51);
+    --current-selection-peak: rgb(58, 65, 65);
     --blk-shadow: rgba(0, 0, 0, .75);
-    --white-text: rgb(255, 255, 255);
+    --wht-shadow: rgba(255, 255, 255, .75);
+    --player-name-bg: rgba(0, 0, 0, .5);
+    --white-text: rgb(230, 230, 230);
+    --color-radiant: rgb(32, 64, 32);
+    --color-dire: rgb(64, 32, 32);
     --screen-width: 1920px;
     --screen-height: 1080px;
 }
@@ -29,13 +33,18 @@
 }
 
 body {
-    width: var(--screen-width);
-    height: var(--screen_height);
+    width: 1920px;
+    height: 1080px;
+    /*
+    position: absolute;
+    */
+    bottom: 0;
     margin: 0;
     overflow: hidden;
     font-family: Reaver;
     background-color: transparent;
     user-select: none;
+    text-shadow: 0px 0px 6px var(--blk-shadow);
 }
 
 #draft {
@@ -65,7 +74,6 @@ body {
     display: flex;
     flex-direction: column;
     width: 45%;
-    box-shadow: inset 0 0 .375em 0 var(--blk-shadow);
     background: linear-gradient(90deg, var(--info-left) 0%, var(--info-right) 100%);
     transition: --info-left .5s, --info-right .5s;
     justify-content: center;
@@ -73,13 +81,13 @@ body {
 }
 
 .info.radiant {
-    --info-left: var(--current-selection-peak);
+    --info-left: var(--color-radiant);
     --info-right: var(--bg_main);
 }
 
 .info.dire {
     --info-left: var(--bg_main);
-    --info-right: var(--current-selection-peak);
+    --info-right: var(--color-dire);
 }
 
 #scorebar_spacer {
@@ -103,7 +111,7 @@ body {
 #current_time {
     font-size: 2em;
     margin-top: -1em;
-    font-weight: 600;   
+    font-weight: 600;
 }
 
 .reserve {
@@ -147,7 +155,7 @@ body {
 }
 
 .pick.active {
-    animation: active_selection 1s ease-in-out infinite alternate;
+    animation: active_selection .75s ease-in-out infinite alternate;
 }
 
 .player_name {
@@ -155,14 +163,16 @@ body {
     width: 100%;
     position: absolute;
     bottom: 0;
+    height: 1.5em;
+    line-height: 1.5em;
     padding: .375em 0 .375em 0;
-    background-color: var(--blk-shadow);
+    background-color: var(--player-name-bg);
     font-family: Radiance;
     font-weight: 400;
     font-size: 1em;
     text-align: center;
-    transition: opacity .5s;
     opacity: 0;
+    transition: opacity .5s;
 }
 
 .pick_video {
@@ -171,7 +181,7 @@ body {
     object-fit: fill;
     z-index: 0;
     opacity: 0;
-    transition: opacity 1s;
+    transition: opacity cubic-bezier(0.25, 0.46, 0.45, 0.94) 1s
 }
 
 .ban {
@@ -182,7 +192,7 @@ body {
 }
 
 .ban.active {
-    animation: active_selection 1.5s ease-in-out infinite alternate;
+    animation: active_selection .75s ease-in-out infinite alternate;
 }
 
 .ban_img {
@@ -191,7 +201,7 @@ body {
     object-fit: cover;
     filter: saturate(.2) brightness(.8) contrast(1.05);
     opacity: 0;
-    transition: opacity 1s;
+    transition: opacity cubic-bezier(0.25, 0.46, 0.45, 0.94) 1s
 }
 
 .shadow {
