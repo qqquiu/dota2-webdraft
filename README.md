@@ -1,4 +1,4 @@
-![draft](https://user-images.githubusercontent.com/13590967/197571003-cd1672a3-1f6d-401b-bc52-f3414e333c4b.png)
+![image](https://github.com/qqquiu/dota2-webdraft/assets/13590967/5ae7c31f-2394-43de-8caa-649b7c53e350)
 
 ## Usage
 - Open a command line/terminal and navigate to your desired folder
