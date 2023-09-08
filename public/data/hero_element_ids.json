@@ -1,0 +1,38 @@
+{
+    "radiant": {
+        "picks": [
+            "radiant_pick0",
+            "radiant_pick1",
+            "radiant_pick2",
+            "radiant_pick3",
+            "radiant_pick4"
+        ],
+        "bans": [
+            "radiant_ban0",
+            "radiant_ban1",
+            "radiant_ban2",
+            "radiant_ban3",
+            "radiant_ban4",
+            "radiant_ban5",
+            "radiant_ban6"
+        ]
+    },
+    "dire": {
+        "picks": [
+            "dire_pick0",
+            "dire_pick1",
+            "dire_pick2",
+            "dire_pick3",
+            "dire_pick4"                
+        ],
+        "bans": [
+            "dire_ban0",
+            "dire_ban1",
+            "dire_ban2",
+            "dire_ban3",
+            "dire_ban4",
+            "dire_ban5",
+            "dire_ban6"
+        ]
+    }
+}

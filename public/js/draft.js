@@ -1,260 +1,162 @@
-var socket = io();
+const [RADIANT, DIRE                ] = ["team2, team3"];
+const [RADIANT_ACTIVE, DIRE_ACTIVE  ] = [2, 3];
+const [LEFT_ARROW, RIGHT_ARROW      ] = ["‹", "›"];
+const [PICK_PREFIX, PICK_SUFFIX     ] = ["/assets/picks/", ".webm"];
+const [BAN_PREFIX, BAN_SUFFIX       ] = ["/assets/bans/", ".png"];
 
-const CURRENT_TIME      = document.getElementById("current_time");
-const RADIANT_RESERVE   = document.getElementById("radiant_reserve");
-const DIRE_RESERVE      = document.getElementById("dire_reserve");
-const ACTIVE_ARROW      = document.getElementById("current_team");
-const CENTER_INFO       = document.getElementById("center_info");
-const RADIANT           = "team2";
-const DIRE              = "team3";
-const PICK_PREFIX       = "/assets/picks/";
-const PICK_SUFFIX       = ".webm";
-const BAN_PREFIX        = "/assets/bans/";
-const BAN_SUFFIX        = ".png";
-const MAX_HEROES        = 24;
+let draft_order = [];
+let draft_index = 0;
+let max_heroes; // We will read this from the game mode JSON
 
-var ACTIVE_TEAM;
-var FIRST_PICK;
+document.addEventListener("DOMContentLoaded", async function () {
+    const   el_SelectionTeam    = document.getElementById("current_team");
+    const   el_SelectionTime    = document.getElementById("current_time");
+    const   el_ReserveRadiant   = document.getElementById("radiant_reserve");
+    const   el_ReserveDire      = document.getElementById("dire_reserve");
+    const   el_CenterInfo       = document.getElementById("center_info");
+    const   socket              = io();
 
-var DRAFT_POINTER       = 0;
-var DRAFT_ORDER         = []; // Need to calculate this on first load
-
-const RADIANT_PICKS_EL = [
-    document.getElementById("radiant_pick0").firstElementChild,
-    document.getElementById("radiant_pick1").firstElementChild,
-    document.getElementById("radiant_pick2").firstElementChild,
-    document.getElementById("radiant_pick3").firstElementChild,
-    document.getElementById("radiant_pick4").firstElementChild,
-],
-DIRE_PICKS_EL = [
-    document.getElementById("dire_pick0").firstElementChild,
-    document.getElementById("dire_pick1").firstElementChild,
-    document.getElementById("dire_pick2").firstElementChild,
-    document.getElementById("dire_pick3").firstElementChild,
-    document.getElementById("dire_pick4").firstElementChild,
-],
-RADIANT_BANS_EL = [
-    document.getElementById("radiant_ban0").firstElementChild,
-    document.getElementById("radiant_ban1").firstElementChild,
-    document.getElementById("radiant_ban2").firstElementChild,
-    document.getElementById("radiant_ban3").firstElementChild,
-    document.getElementById("radiant_ban4").firstElementChild,
-    document.getElementById("radiant_ban5").firstElementChild,
-    document.getElementById("radiant_ban6").firstElementChild,
-],
-DIRE_BANS_EL = [
-    document.getElementById("dire_ban0").firstElementChild,
-    document.getElementById("dire_ban1").firstElementChild,
-    document.getElementById("dire_ban2").firstElementChild,
-    document.getElementById("dire_ban3").firstElementChild,
-    document.getElementById("dire_ban4").firstElementChild,
-    document.getElementById("dire_ban5").firstElementChild,
-    document.getElementById("dire_ban6").firstElementChild,
-]
-
-function Initialize() {
-    const ban_imgs = document.querySelectorAll(".ban_img");
-    const pick_videos = document.querySelectorAll(".pick_video");
-
-    ban_imgs.forEach((ban_img) => {
-        ban_img.addEventListener("load", () => {
-            ban_img.style.opacity = 1;
-            ban_img.style.display = "block";
-        })
-    })
-
-    pick_videos.forEach((pick_video) => {
-        pick_video.addEventListener("loadedmetadata", () => {
-            pick_video.style.opacity = 1;
-        })
-    })
-}
-
-async function LoadDraft() {
+    // Page is loaded, so we request server for the draft information (first pick, picks & bans)
     socket.emit("RequestDraft");
-    Initialize();
-}
-
-socket.once("StartDraft", function(draft) {
-    FIRST_PICK = draft.first_pick;
-    CENTER_INFO.classList.add(FIRST_PICK == RADIANT? "radiant" : "dire");
-
-    draft.radiant_bans.forEach((hero, index) => {
-        update_ban(hero, RADIANT_BANS_EL[index]);
+    const draft = await new Promise((resolve) => {
+        socket.once("InitDraft", (draft) => {
+            resolve(draft);
+        });
     });
 
-    draft.dire_bans.forEach((hero, index) => {
-        update_ban(hero, DIRE_BANS_EL[index]);
+    // We need the draft object from above to proceed properly
+    try {
+        const cm = await LoadJSON("/data/captains_mode.json");
+        if (cm) {
+            max_heroes = cm.max_heroes;
+
+            const is_radiant_fp = (draft.first_pick == RADIANT);
+            cm.draft.forEach((phase) => {
+                phase.selections.forEach((selection) => {
+                    const team = is_radiant_fp ? (selection.team === "first" ? "radiant" : "dire") : (selection.team === "first" ? "dire" : "radiant");
+                    const el_id = `${team}_${selection.type}${selection.id}`;
+                    const e = document.getElementById(el_id);
+                    draft_order.push(e);
+                });
+            });
+
+        }
+    } catch (error) {
+        console.error(error);
+    }
+
+    // We need the hero elements object to proceed
+    try {
+        const hero_elements = await LoadJSON("/data/hero_element_ids.json");
+
+        function set_selections(selections, action, element_ids) {
+            selections.forEach((hero, index) => {
+                const el = document.getElementById(element_ids[index]).firstElementChild;
+                action(hero, el);
+            })
+        }
+
+        function set_pick(hero_name, el) {
+            el.src = PICK_PREFIX + hero_name + PICK_SUFFIX;
+            selection_made();
+        }
+        
+        function set_ban(hero_name, el) {
+            el.src = BAN_PREFIX + hero_name + BAN_SUFFIX;
+            selection_made();
+        }
+
+        if (hero_elements) {
+            set_selections(draft.radiant_bans,  set_ban,    hero_elements.radiant.bans);
+            set_selections(draft.dire_bans,     set_ban,    hero_elements.dire.bans);
+            set_selections(draft.radiant_picks, set_pick,   hero_elements.radiant.picks);
+            set_selections(draft.dire_picks,    set_pick,   hero_elements.dire.picks);
+        }
+    } catch (error) {
+        console.error(error);
+    }
+
+    socket.on("UpdateDraftState", function(state) {
+        if (!state.active_team) {
+            console.log("Draft didn't start");
+            return;
+        }
+
+        // Change background and side indicator
+        // Change timer styling
+        el_ReserveRadiant.innerText = state.radiant_reserve;
+        el_ReserveDire.innerText    = state.dire_reserve;
+    
+        if (state.active_time) {
+            el_SelectionTime.innerText = state.active_time;
+            el_ReserveRadiant.classList.remove("active");
+            el_ReserveDire.classList.remove("active");
+            el_SelectionTime.classList.add("active");
+            switch (state.active_team) {
+                case RADIANT_ACTIVE:
+                    el_SelectionTeam.innerText = LEFT_ARROW;
+                    break;
+                case DIRE_ACTIVE:
+                    el_SelectionTeam.innerText = RIGHT_ARROW;
+                    break;
+            }
+        }
+        else {
+            el_SelectionTime.classList.remove("active");
+            switch (state.active_team) {
+                case RADIANT_ACTIVE:
+                    el_SelectionTeam.innerText = LEFT_ARROW;
+                    el_ReserveRadiant.classList.add("active");
+                    el_ReserveDire.classList.remove("active");
+                    break;
+                case DIRE_ACTIVE:
+                    el_SelectionTeam.innerText = RIGHT_ARROW;
+                    el_ReserveDire.classList.add("active");
+                    el_ReserveRadiant.classList.remove("active");
+                    break;
+            }
+        }
     });
-
-    draft.radiant_picks.forEach((hero, index) => {
-        update_pick(hero, RADIANT_PICKS_EL[index]);
+    
+    socket.on("NewSelection", async function(selection) {
+        const hero = selection.hero;
+        const el = draft_order[draft_index].firstElementChild;
+        if (el.tagName === "IMG") {
+            el.src = BAN_PREFIX + hero + BAN_SUFFIX;
+        }
+        else {
+            el.src = PICK_PREFIX + hero + PICK_SUFFIX;
+        }
+        selection_made();
     });
+})
 
-    draft.dire_picks.forEach((hero, index) => {
-        update_pick(hero, DIRE_PICKS_EL[index]);
+async function LoadJSON(file) {
+    return new Promise((resolve, reject) => {
+        fetch(file)
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error("Failed to load: " + file);
+            }
+            return response.json();
+        })
+        .then((data) => {
+            resolve(data);
+        })
+        .catch((error) => {
+            reject(error);
+        });
     });
-
-    // Terrible draft order time!
-    let fp, sp;
-    if (FIRST_PICK == RADIANT) {
-        fp = "radiant";
-        sp = "dire";
-    }
-    else {
-        fp = "dire";
-        sp = "radiant";
-    }
-    // This is so disgusting I hope it does not work so I have to think more
-    let first = document.getElementById(`${fp}_ban0`);
-    first.classList.add("active");
-    // Ban phase #1
-    DRAFT_ORDER.push(document.getElementById(`${fp}_ban0`));
-    DRAFT_ORDER.push(document.getElementById(`${sp}_ban0`));
-    DRAFT_ORDER.push(document.getElementById(`${sp}_ban1`));
-    DRAFT_ORDER.push(document.getElementById(`${fp}_ban1`));
-    DRAFT_ORDER.push(document.getElementById(`${sp}_ban2`));
-    DRAFT_ORDER.push(document.getElementById(`${sp}_ban3`));
-    DRAFT_ORDER.push(document.getElementById(`${fp}_ban2`));
-    // Pick phase #1
-    DRAFT_ORDER.push(document.getElementById(`${fp}_pick0`));
-    DRAFT_ORDER.push(document.getElementById(`${sp}_pick0`));
-    // Ban phase #2
-    DRAFT_ORDER.push(document.getElementById(`${fp}_ban3`));
-    DRAFT_ORDER.push(document.getElementById(`${fp}_ban4`));
-    DRAFT_ORDER.push(document.getElementById(`${sp}_ban4`));
-    // Pick phase #2
-    DRAFT_ORDER.push(document.getElementById(`${sp}_pick1`));
-    DRAFT_ORDER.push(document.getElementById(`${fp}_pick1`));
-    DRAFT_ORDER.push(document.getElementById(`${fp}_pick2`));
-    DRAFT_ORDER.push(document.getElementById(`${sp}_pick2`));
-    DRAFT_ORDER.push(document.getElementById(`${sp}_pick3`));
-    DRAFT_ORDER.push(document.getElementById(`${fp}_pick3`));
-    // Ban phase #3
-    DRAFT_ORDER.push(document.getElementById(`${fp}_ban5`));
-    DRAFT_ORDER.push(document.getElementById(`${sp}_ban5`));
-    DRAFT_ORDER.push(document.getElementById(`${sp}_ban6`));
-    DRAFT_ORDER.push(document.getElementById(`${fp}_ban6`));
-    // Pick phase #3
-    DRAFT_ORDER.push(document.getElementById(`${fp}_pick4`));
-    DRAFT_ORDER.push(document.getElementById(`${sp}_pick4`));
-});
-
-socket.on("ActiveTeam", (active) => {
-    ACTIVE_TEAM = active;
-    switch (ACTIVE_TEAM)
-    {
-        case RADIANT:
-        {
-            ACTIVE_ARROW.innerText = "‹";
-            CENTER_INFO.classList.replace("dire", "radiant");
-            break;
-        }
-        case DIRE:
-        {
-            ACTIVE_ARROW.innerText = "›";
-            CENTER_INFO.classList.replace("radiant", "dire");
-            break;
-        }
-        default:
-        {
-            break;
-        }
-    }
-});
-
-socket.on("UpdateTimers", (active_time, r_min, r_sec, d_min, d_sec) => {
-    CURRENT_TIME.innerText = active_time;
-    RADIANT_RESERVE.innerText = r_min + ":" + add_leading_zero(r_sec);
-    DIRE_RESERVE.innerText = d_min + ":" + add_leading_zero(d_sec);
-
-    if (active_time)
-    {
-        RADIANT_RESERVE.classList.remove("active");
-        DIRE_RESERVE.classList.remove("active");
-        CURRENT_TIME.classList.add("active");
-    }
-    else
-    {
-        CURRENT_TIME.classList.remove("active");
-        switch (ACTIVE_TEAM)
-        {
-            case RADIANT:
-            {
-                RADIANT_RESERVE.classList.add("active");
-                DIRE_RESERVE.classList.remove("active");                
-                break;
-            }
-            case DIRE:
-            {
-                DIRE_RESERVE.classList.add("active");
-                RADIANT_RESERVE.classList.remove("active");                
-                break;
-            }
-            default:
-            {
-                break;
-            }
-        }
-    }    
-});
-
-socket.on("NewSelection", (team, type, hero) => {
-    const type_check = type.slice(0, -1); // remove digit from end of string
-    const el = document.getElementById(team + "_" + type);
-    const child = el.firstElementChild;
-
-    switch(type_check)
-    {
-        case "pick":
-        {
-            update_pick(hero, child);
-            break;
-        }
-        case "ban":
-        {
-            update_ban(hero, child);
-            break;
-        }
-    }
-});
-
-socket.on("NewPick", (hero, team) => {
-    let element;
-    switch (team)
-    {
-        case RADIANT:
-            {
-                break;
-            }
-        case DIRE:
-            {
-                break;
-            }
-    }
-    //update_pick(hero, element);
-});
-
-socket.on("NewBan", (hero, team) => {
-    //update_pick(hero, team);
-});
-
-async function update_pick(hero, element) {
-    element.src = PICK_PREFIX + hero + PICK_SUFFIX;
-    selection_made();
 }
 
-async function update_ban(hero, element) {
-    element.src = BAN_PREFIX + hero + BAN_SUFFIX;
-    selection_made();
+function end_draft() {
+    console.log("Draft ended");
 }
 
-async function selection_made() {
-    DRAFT_ORDER[DRAFT_POINTER].classList.remove("active");
-    DRAFT_POINTER++;
-    DRAFT_ORDER[DRAFT_POINTER].classList.add("active");
-}
-
-function add_leading_zero(n) {
-    return n < 10 ? ("0" + n) : n;
+function selection_made() {
+    draft_order[draft_index].firstElementChild.style.opacity = 1;
+    draft_order[draft_index].classList.remove("active");
+    draft_index++;
+    if (draft_index === max_heroes) end_draft();
+    draft_order[draft_index].classList.add("active");
 }

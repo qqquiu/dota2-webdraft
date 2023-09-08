@@ -1,8 +1,8 @@
 @import "fonts.css";
 
 :root {
-    --bg_main: rgb(26, 29, 29);
-    --bg_main_peak: rgb(45, 51, 51);
+    --bg-main: rgb(26, 29, 29);
+    --bg-main-peak: rgb(45, 51, 51);
     --current-selection: rgb(45, 51, 51);
     --current-selection-peak: rgb(58, 65, 65);
     --blk-shadow: rgba(0, 0, 0, .75);
@@ -17,13 +17,13 @@
 
 @property --info-left {
     syntax: '<color>';
-    initial-value: rgb(23, 29, 29);
+    initial-value: rgb(26, 29, 29);
     inherits: false;
 }
 
 @property --info-right {
     syntax: '<color>';
-    initial-value: rgb(23, 29, 29);
+    initial-value: rgb(26, 29, 29);
     inherits: false;
 }
 
@@ -82,11 +82,11 @@ body {
 
 .info.radiant {
     --info-left: var(--color-radiant);
-    --info-right: var(--bg_main);
+    --info-right: var(--bg-main);
 }
 
 .info.dire {
-    --info-left: var(--bg_main);
+    --info-left: var(--bg-main);
     --info-right: var(--color-dire);
 }
 
@@ -147,15 +147,36 @@ body {
 
 .pick {
     position: relative;
-    background: var(--bg_main) url("../assets/pick_logo.png") center center/auto no-repeat;
-    background-size: 50%;
+    background-color: var(--bg-main);
+    background: url("../assets/pick_logo.png") center center/50% no-repeat;
     background-blend-mode: overlay;
     width: 20%;
     height: 100%;
 }
 
+.ban.radiant,
+.pick.radiant
+{
+    background-color: var(--bg-main);
+}
+
+.ban.dire,
+.pick.dire {
+    background-color: var(--bg-main);
+}
+
+.ban.active,
 .pick.active {
     animation: active_selection .75s ease-in-out infinite alternate;
+}
+
+.pick_video {
+    width: 100%;
+    height: 100%;
+    object-fit: fill;
+    z-index: 0;
+    opacity: 0;
+    transition: opacity cubic-bezier(0.25, 0.46, 0.45, 0.94) 1s
 }
 
 .player_name {
@@ -175,24 +196,11 @@ body {
     transition: opacity .5s;
 }
 
-.pick_video {
-    width: 100%;
-    height: 100%;
-    object-fit: fill;
-    z-index: 0;
-    opacity: 0;
-    transition: opacity cubic-bezier(0.25, 0.46, 0.45, 0.94) 1s
-}
-
 .ban {
     position: relative;
-    background-color: var(--bg_main);
+    background-color: var(--bg-main);
     width: 15%;
     height: 100%;
-}
-
-.ban.active {
-    animation: active_selection .75s ease-in-out infinite alternate;
 }
 
 .ban_img {

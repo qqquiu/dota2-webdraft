@@ -1,3 +1,6 @@
 ex/
 node_modules/
-log.json
+log.txt
+log_player.txt
+public/assets/music/draft-ti.mp3
+public/assets/music/test.wav

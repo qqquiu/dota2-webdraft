@@ -1,12 +1,13 @@
+// TODO: Use import and not require
 /*
 import express from 'express';
 import { DOTA2GSI } from 'dotagsi';
-
-// TODO: Use import and not require
+import moment from 'moment';
 */
+
 // Dota 2 GSI stuff
-var d2gsi = require('dota2-gsi');
-var dota_server = new d2gsi();
+let d2gsi = require('dota2-gsi');
+let dota_server = new d2gsi();
 
 // Web framework + sockets
 const express = require('express');
@@ -20,28 +21,18 @@ const io = new Server(http_server);
 const path = require('path');
 express_app.use(express.static('public'));
 
-express_app.get('/panel', (req, res) =>
-{
-    res.sendFile(path.join(__dirname + '/panel.html'));
-});
-
 express_app.get('/draft', (req, res) =>
 {
     res.sendFile(path.join(__dirname + '/draft.html'));
 });
 
-express_app.get('/ingame', (req, res) =>
-{
-    res.sendFile(path.join(__dirname + '/ingame.html'));
-});
-
 http_server.listen(8080, () => 
 {
-    console.log("Control Panel: %s", "http://localhost:8080/panel");
+    //console.log("Control Panel: %s", "http://localhost:8080/panel");
 });
 
 // Some globals to help further on
-const [RADIANT, DIRE, RADIANT_ACTIVE, DIRE_ACTIVE, TOTAL_PICKS, TOTAL_BANS] = ["team2", "team3", 2, 3, 5, 7];
+const [RADIANT, DIRE] = ["team2", "team3"];
 const [GS_INIT, GS_WAIT, GS_DRAFT, GS_STRAT, GS_SHOW, GS_PRE, GS_INGAME, GS_POST, GS_LAST, GS_DC] =
     [
         "DOTA_GAMERULES_STATE_INIT",
@@ -56,159 +47,140 @@ const [GS_INIT, GS_WAIT, GS_DRAFT, GS_STRAT, GS_SHOW, GS_PRE, GS_INGAME, GS_POST
         "DOTA_GAMERULES_STATE_DISCONNECT"
     ];
 
-var RADIANT_PICKS       = new Set();
-var DIRE_PICKS          = new Set();
-var RADIANT_BANS        = new Set();
-var DIRE_BANS           = new Set();
-var FIRST_PICK          = null;
-var DRAFT_FIRST_LOAD    = false;
-
-var clients = [];
+let clients = new Set();
+let hosts = new Set();
 
 io.on("connection", (socket) => {
     // Called by the draft.html page to get data in case it's reloaded (ie F5)
     // TODO: this needs to be called only from Draft.html
-    socket.on("RequestDraft", () => {
-        poll_draft();
-        io.emit("StartDraft", {
-            first_pick:     FIRST_PICK,
-            radiant_bans:   Array.from(RADIANT_BANS),
-            radiant_picks:  Array.from(RADIANT_PICKS),
-            dire_bans:      Array.from(DIRE_BANS),
-            dire_picks:     Array.from(DIRE_PICKS)
-        });
+    socket.on("RequestDraft", async () => {
+        let draft = await poll_draft();
+        if (draft) io.emit("InitDraft", draft);
     })
 })
 
-dota_server.events.on('newclient', async function(client) {
-    //console.log("Host %s connected using token \"%s\"", client.ip, client.auth.token);
-    clients.push(client);
-    //if (client.gamestate.map.matchid) console.log("Receiving data from Match ID %s", client.gamestate.map.matchid);
+dota_server.events.on('newclient', function(client) {
+    hosts.add({hostname: client.ip, token: client.auth.token});
+    clients.add(client);
 
-    client.on('newdata', async function(data) {
-        try
-        {
-            switch (data.map.game_state)
-            {
+    client.on('newdata', function(data) {
+        try {
+            switch (data.map.game_state) {
                 case GS_DRAFT:
-                    {
-                        if (data.draft) {
-                            if (!DRAFT_FIRST_LOAD) {
-                                DRAFT_FIRST_LOAD = true;
-                                parse_draft(data.draft);
-                                break;
-                            }
-                            update_draft(data.draft, data.previously.draft ? data.previously.draft : false);
-                            break;
-                        }
-                    }
+                    update_draft(data.draft, data.previously.draft);
+                    console.log(data.player);
+                    console.log(data.hero);
+                    break;
                 case GS_STRAT:
-                    {
-                        console.log("Strategy time!");
-                        break;
-                    }
+                    //console.log("Strategy time!");
+                    break;
             }
         }
-        catch(err) 
-        {
+        catch(err) {
             //console.log(err);
             return;
         }
     });
 });
 
-async function poll_draft() {
-    if (clients[0].auth.token == "production") {
-        var draft = clients[0].gamestate.draft;
-        if (draft) parse_draft(draft);
+function poll_draft() {
+    // TODO: Update this code to try and test multiple clients using auth tokens for different matches
+    let draft;
+    if (clients.size > 0) {
+        const client = clients.values().next().value;
+        if (client && client.gamestate) {
+            if (client.gamestate.draft) 
+                draft = client.gamestate.draft;
+            else
+                return null;
+        }
     }
-    else {
-        console.log("Couldn't poll draft data (no clients on this token)");
-    }
-}
 
-async function parse_draft(draft) {
-    if (!draft) return; 
-
-    // Extract only the hero names from a specific team's draft
-    function extract_draft(team_draft, picks, bans) {
-        for ( const key in team_draft ) {
-            const value = team_draft[key];
-            if (value == '') continue;
-            if ( /^pick\d+_class$/.test( key ))
-            {
-                picks.add( value );
+    // Helper to extract only the hero names from a specific team's draft
+    function extract_draft(team_draft) {
+        let picks = [];
+        let bans = [];
+        for (const key in team_draft) {
+            const hero = team_draft[key];
+            if (hero == '') continue;
+            if (/^pick\d+_class$/.test(key)) {
+                picks.push(hero);
                 continue;
             }
-            if ( /^ban\d+_class$/.test( key ))
-            {
-                bans.add( value );
+            if (/^ban\d+_class$/.test(key)) {
+                bans.push(hero);
                 continue;
+            }
+        }
+        return {
+            picks: picks,
+            bans: bans
+        }
+    }
+
+    set_draft_state(draft.activeteam, draft.activeteam_time_remaining, draft.radiant_bonus_time, draft.dire_bonus_time);
+    const fp = draft[RADIANT].home_team ? RADIANT : DIRE;
+    const {picks: rp, bans: rb} = extract_draft(draft[RADIANT]);
+    const {picks: dp, bans: db} = extract_draft(draft[DIRE]);
+
+    return {
+        first_pick:     fp,
+        radiant_bans:   rb,
+        radiant_picks:  rp,
+        dire_bans:      db,
+        dire_picks:     dp,
+    }
+}
+
+function set_draft_state(team, time, radiant_reserve, dire_reserve) {
+    const rr = String(~~(radiant_reserve / 60)) + ":" + add_leading_zero(radiant_reserve % 60);
+    const dr = String(~~(dire_reserve / 60)) + ":" + add_leading_zero(dire_reserve % 60);  
+
+    const state = {
+        active_team: team,
+        active_time: time,
+        radiant_reserve: rr,
+        dire_reserve: dr
+    }
+
+    if (state.active_team) io.emit("UpdateDraftState", state);
+}
+
+function filter_draft_changes(draft, previously) {
+    function parse_changes(draft, previously, team) {
+        const suffix = "_class";
+        const changes = Object.keys(previously[team]).filter((key) => key.endsWith(suffix));
+        if (!changes) console.log("WTF: This shouldn't happen");
+
+        const type_pattern = new RegExp(`^(ban|pick)(\\d+)(?=${suffix}$)`);
+
+        for (const changed of changes) {
+            const match = changed.match(type_pattern)
+            if (match) {
+                const type = match[1];
+                const id = match[2];
+                if (draft[team][changed] === '') return;
+                
+                // We emit all data here, even though client page ideally only needs the type (pick/ban) and hero name
+                io.emit("NewSelection", {
+                    team: team === RADIANT ? "radiant" : "dire",
+                    type: type,
+                    id:   id,
+                    hero: draft[team][changed]
+                })
             }
         }
     }
 
-    FIRST_PICK = draft[RADIANT].home_team ? RADIANT : DIRE;
-    RADIANT_BANS.clear();
-    RADIANT_PICKS.clear();
-    DIRE_BANS.clear();
-    DIRE_PICKS.clear();
-
-    extract_draft( draft[RADIANT], RADIANT_PICKS, RADIANT_BANS );
-    extract_draft( draft[DIRE], DIRE_PICKS, DIRE_BANS );
+    if (previously[RADIANT]) parse_changes(draft, previously, RADIANT);
+    if (previously[DIRE]) parse_changes(draft, previously, DIRE);
 }
 
-async function update_draft( draft, delta ) {
-    switch ( draft.activeteam ) {
-        case RADIANT_ACTIVE:
-            set_active_team( RADIANT );
-            break;
-        case DIRE_ACTIVE:
-            set_active_team( DIRE );
-            break;
-    }
-    
-    set_timers( draft.activeteam_time_remaining, draft.radiant_bonus_time, draft.dire_bonus_time );
-    
-    if ( delta ) set_draft( draft[RADIANT], draft[DIRE], delta );
+function update_draft(draft, previously) {
+    set_draft_state(draft.activeteam, draft.activeteam_time_remaining, draft.radiant_bonus_time, draft.dire_bonus_time);    
+    if (previously) filter_draft_changes(draft, previously);
 }
 
-async function set_active_team( team ) {
-    io.emit( "ActiveTeam", team );
-}
-
-async function set_timers( active_time, radiant_reserve, dire_reserve ) {
-    const r_min = ~~(radiant_reserve / 60);
-    const r_sec = radiant_reserve % 60;
-    const d_min = ~~(dire_reserve / 60);
-    const d_sec = dire_reserve % 60;
-    io.emit("UpdateTimers", active_time, r_min, r_sec, d_min, d_sec);
-}
-
-async function set_draft( radiant, dire, delta ) {
-    if ( !delta ) return;
-
-    if ( delta[RADIANT] )
-    {
-        const changes = Object.keys(delta.team2)
-            .filter((key) => key.includes("class"));
-
-        for (const c of changes)
-        {
-            new_c = c.slice(0, -6); // remove _class from end of string
-            io.emit("NewSelection", "radiant", new_c, radiant[c]);
-        }
-    }
-
-    if ( delta[DIRE] )
-    {
-        const changes = Object.keys(delta.team3)
-            .filter((key) => key.includes("class"));
-
-        for (const c of changes)
-        {
-            new_c = c.slice(0, -6); // remove _class from end of string
-            io.emit("NewSelection", "dire", new_c, dire[c]);
-        }
-    }
+function add_leading_zero(n) {
+    return n < 10 ? ("0" + n) : n;
 }
